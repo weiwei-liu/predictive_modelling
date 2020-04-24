@@ -38,7 +38,7 @@ plot(log(count.total)~day.total)
 
 From this plot, it can be seen that in the first twenty days of the data, the number of cases changed very slowly, this could be a concern in the modelling in terms of including or excluding this periods.
 
-*Plot `British Columbia` data *
+*Plot `British Columbia` data*
 
 ```{r}
 train1<-read.csv('train.csv')
@@ -150,36 +150,6 @@ acf(residuals(covid.gam))
 ```
 
 Second conclusion: based on this residual autocorrelation check, the model is autocorrelated. So, `ARIMA` model could be another possible solution.
-
-```{r,include=F}
-x <- seq(0, 100)
-plot(x, predict(covid.gam, newdata = data.frame(day=x)),ylab="Expected Output", xlab="day", type="l") 
-points(log(count)~day)
-```
-
-```{r,include=F}
-suppressMessages(library(dplyr))
-
-normalize <- function(x){
-  (x - min(x))/(max(x)-min(x))
-} 
-
-
-train1<-read.csv('train.csv')
-train1<-train1[which(train1$Country_Region=='Canada'),]
-train1$province=droplevels(train1$Province_State)
-
-train1=train1 %>%
-  group_by(province) %>%
-  mutate(count_std = normalize(ConfirmedCases)) 
-
-
-train1[which(train1['province']=='Ontario'),]
-
-count1<-diff(train1[which(train1['province']=='British Columbia'),]$count_std)+0.001
-day<-1:length(count1)
-plot(day,log(count1))
-```
 
 ## 3. ARIMA
 
