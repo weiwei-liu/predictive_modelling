@@ -5,16 +5,10 @@ date: "16/04/2020"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 This project aims to explore the Coronavirus dataset from Kaggle and forecast on the number of cases for the next 30 days. We will explore the data to find trends and forecast using ARIMA model. The dataset consists of around 4,935 rows of records of daily cases from January 22 to March 11. The data is mainly sourced out from Johns Hopkins University for education and academic research purposes, where they aggregated data from variou globalresources such as, World Health Organization, US Center for Disease Control, Canadian Government, China CDC, Italy Ministry of Health and others. 
 
-In this project, we will try to model the number of confirmed infected cases of COVID-19 in Canada. The data was downloaded from Kaggle, which was provided by John Hopskin Hospital team. The data available are from 22th Jan. to 15th Apr.
-
-We tried three different models `GLM`, `GAM` and `ARIMA`, and evaluated the goodness of fit of each model, then compared the advantage and disadvantage of these models and drew some conclusions. 
-
+In this project, we will try to model the number of confirmed infected cases of COVID-19 in Canada. The data available are from 22th Jan. to 15th Apr. We tried three different models `GLM`, `GAM` and `ARIMA`, and evaluated the goodness of fit of each model, then compared the advantage and disadvantage of these models and drew some conclusions. 
 
 
 ### 0.1 read the data
@@ -38,7 +32,7 @@ plot(log(count.total)~day.total)
 
 From this plot, it can be seen that in the first twenty days of the data, the number of cases changed very slowly, this could be a concern in the modelling in terms of including or excluding this periods.
 
-*Plot `British Columbia` data *
+*Plot `British Columbia` data*
 
 ```{r}
 train1<-read.csv('train.csv')
@@ -150,36 +144,6 @@ acf(residuals(covid.gam))
 ```
 
 Second conclusion: based on this residual autocorrelation check, the model is autocorrelated. So, `ARIMA` model could be another possible solution.
-
-```{r,include=F}
-x <- seq(0, 100)
-plot(x, predict(covid.gam, newdata = data.frame(day=x)),ylab="Expected Output", xlab="day", type="l") 
-points(log(count)~day)
-```
-
-```{r,include=F}
-suppressMessages(library(dplyr))
-
-normalize <- function(x){
-  (x - min(x))/(max(x)-min(x))
-} 
-
-
-train1<-read.csv('train.csv')
-train1<-train1[which(train1$Country_Region=='Canada'),]
-train1$province=droplevels(train1$Province_State)
-
-train1=train1 %>%
-  group_by(province) %>%
-  mutate(count_std = normalize(ConfirmedCases)) 
-
-
-train1[which(train1['province']=='Ontario'),]
-
-count1<-diff(train1[which(train1['province']=='British Columbia'),]$count_std)+0.001
-day<-1:length(count1)
-plot(day,log(count1))
-```
 
 ## 3. ARIMA
 
