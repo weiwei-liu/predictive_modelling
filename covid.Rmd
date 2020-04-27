@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This project aims to explore the Coronavirus dataset from Kaggle and forecast on the number of cases for the next 30 days. We will explore the data to find trends and forecast using ARIMA model. The dataset consists of around 4,935 rows of records of daily cases from January 22 to March 11. The data is mainly sourced out from Johns Hopkins University for education and academic research purposes, where they aggregated data from variou globalresources such as, World Health Organization, US Center for Disease Control, Canadian Government, China CDC, Italy Ministry of Health and others. 
+This project aims to explore the Coronavirus dataset from Kaggle and forecast the number of cases for the next 30 days. We will explore the data to find trends and forecast using ARIMA model. The dataset consists of around 4,935 of records of daily cases from January 22 to March 11. The data is mainly sourced out from Johns Hopkins University for education and academic research purposes, where they aggregated data from various global resources such as World Health Organization, US Center for Disease Control, Canadian Government, China CDC, Italy Ministry of Health and others. 
 
 In this project, we will try to model the number of confirmed infected cases of COVID-19 in Canada. The data was downloaded from Kaggle, which was provided by John Hopskin Hospital team. The data available are from 22th Jan. to 15th Apr.
 
