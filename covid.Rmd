@@ -33,7 +33,7 @@ head(train,2)
 ```{r}
 count.total<-diff(train$ConfirmedCase)
 day.total<-1:length(count.total)
-plot(log(count.total)~day.total，pch=4,col="darkred",cex=.8) 
+plot(log(count.total)~day.total,pch=4,col="darkred",cex=.8) 
 title("log(totalConfirmedCases) in Canada, Jan.22~Apr.15",font.main=3)
 ```
 
@@ -72,7 +72,7 @@ count<-count.total[1:75]
 count.test<-count.total[76:83]
 day<-day[1:75]
 day.test<-day[76:83]
-plot(log(count)~day，pch=4,col="darkred",cex=.8)
+plot(log(count)~day,pch=4,col="darkred",cex=.8)
 title("Training Set: log(#Cases), Jan.22~Apr.6 Canada",font.main=3)
 ```
 
@@ -258,8 +258,7 @@ print(paste("GAM AIC: ",AIC(covid.gam)))
 
 In terms of AIC, clearly `ARIMA` model wins. The fitted ARIMA(0,1,2) model is : 
 
-Ŷ<sub>t</sub>   =  20.7957 + Y<sub>t-1</sub>  - 1.3574e<sub>t-1</sub> + 0.7537e<sub>t-2</sub> , 
-
+$\hat Y_t=20.7957+Y_{t-1}-1.3574e_{t-1}+0.7537e_{t-2}$
 
 So given number of increase/cases, previous two error terms we can generally predict the following number within 2*sigma. 
 
