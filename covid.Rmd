@@ -33,10 +33,11 @@ head(train,2)
 ```{r}
 count.total<-diff(train$ConfirmedCase)
 day.total<-1:length(count.total)
-plot(log(count.total)~day.total) 
+plot(log(count.total)~day.total，pch=4,col="darkred",cex=.8) 
+title("log(totalConfirmedCases) in Canada, Jan.22~Apr.15",font.main=3)
 ```
 
-From this plot, it can be seen that in the first twenty days of the data, the number of cases changed very slowly, this could be a concern in the modelling in terms of including or excluding this periods.
+From this plot, it can be seen that in the first twenty days of the data, the number of cases changed very slowly, this could be a concern in the modelling in terms of including or excluding this periods.  If the first 20 days are included, the model can rarely be improved for future prediction since those data points are nearly 0 and barely change;  however if not the sample size is too small.  
 
 *Plot `British Columbia` data *
 
@@ -45,15 +46,18 @@ train1<-read.csv('train.csv')
 train1<-train1[which(train1$Country_Region=='Canada'),]
 train1$province=droplevels(train1$Province_State)
 
-count.total<-diff(train1[which(train1['province']=='British Columbia'),]$ConfirmedCases)
-day.total<-1:length(count.total)
-plot(log(count.total+1)~day.total)    # use `+1` to avoid log(0)
+count.total2<-diff(train1[which(train1['province']=='British Columbia'),]$ConfirmedCases)
+day.total<-1:length(count.total2)
+plot(count.total2, type = 'h',main="Daily Cases Increase in BC, Canada, Jan.22~Apr.15",
+  xlab="Number of Days", col=c("royalblue"))
+# plot(log(count.total+1)~day.total)    # use `+1` to avoid log(0)
 ```
 
-This plot shows that in day 40-80, there are several days, the daily increase is 0, which indicates the data was not updated daily, so this could cause some trouble in the modelling of this data.
+This plot shows that in day 40-80, there are several aperiodic cycles, the daily increase is 0, which indicates the data was not updated daily, so this could cause some trouble in the modelling of this data.
 
 And we also plot the data of different province, several provinces showed the same problem of updating data not daily. Another finding is that, different province shows different cases increasing patterns. This should also be beard in mind in the evaluation of the models, since we take the data of the whole country as ONE.
 
+---
 
 ## 1.General Linear Model
 
@@ -68,7 +72,8 @@ count<-count.total[1:75]
 count.test<-count.total[76:83]
 day<-day[1:75]
 day.test<-day[76:83]
-plot(log(count)~day)
+plot(log(count)~day，pch=4,col="darkred",cex=.8)
+title("Training Set: log(#Cases), Jan.22~Apr.6 Canada",font.main=3)
 ```
 
 ### 1.2 Fit the GLM model
@@ -80,8 +85,9 @@ summary(covid.glm)
 
 ```{r}
 suppressMessages(library(MPV))
-plot(day,log(count))
+plot(day,log(count),pch=4,col="darkred",cex=.8)
 quadline(covid.glm)
+title("Fitting Training Set: GLM, Jan.22~Apr.6 Canada",font.main=3)
 ```
 
 
@@ -92,11 +98,13 @@ par(mfrow=c(2,2))
 plot(covid.glm)
 ```
 
-There are some concerns from this plot, the major one is that there are some outliers in the data strongly influenced the model from the `Cook's distance` plot, and the reponse data is not normally distributed from the `QQ` plot. In the `Scale-Location` plot, there is an upward trend which is concerning.
+There are some concerns from this plot, the major one is that there are some outliers in the data strongly influenced the model from the `Cook's distance` plot, and the reponse data is not normally distributed from the `QQ` plot. In the `Scale-Location` plot, there is an upward trend which is concerning.  Generally the lower and upper bounds of datasets made the model inappropriate.  
 
-### 1.4 Conclusion
+### 1.4 Sub-conclusion 1 of GLM model:
 
-Overall, this model is **not** a good model, since the the reponse of the data after `log()` is not linear, so it is hard to use a linear model to fit the data. So nonlinear model could be a possible solution.
+Overall, this model is **NOT** an appropriate model mainly because the the reponse of the data after `log()` is not linear(the total number of cases in Canada is not strictly following anything log-like), so it is hard to use a linear model to fit the data. So nonlinear model could be a possible solution.
+
+---
 
 ## 2. Generalized Additive Model
 
@@ -112,6 +120,7 @@ Obtain plot of the estimate of the spline function, together with its confidence
 
 ```{r}
 plot(covid.gam)
+title("Fitting Training Set: GAM, Jan.22~Apr.6 Canada",font.main=3)
 ```
 
 Check the residual deviance
@@ -128,7 +137,7 @@ Compare with the `GLM` model in terms of residual deviance, this model improved 
 
 ### 2.2 Prediction
 
-Predict the test set and evaluate the model
+Predict the test set(total number of cases) and evaluate the model: 
 
 ```{r}
 pre.gam=predict.gam(covid.gam,newdata=data.frame(day=seq(76,83)),type="response",se.fit = T)
@@ -139,9 +148,9 @@ pre.gam
 (pre.gam$fit-count.test)/pre.gam$se.fit
 ```
 
-### 2.3 Conclusion
+### 2.3 GAM Sub-conclusion 2: 
 
-First conclusion: based on the difference of the fitted value and true value, most of the differnces are around 6~7 standard errors, which are really big. So the `GAM` model is **not** a good model in this sense.
+First conclusion: based on the difference of the fitted value and true value, most of the differnces are around 6~7 standard errors, which are really big. So the `GAM` model is **NOT** a good model in this sense.
 
 *Residual plot*
 
@@ -149,12 +158,12 @@ First conclusion: based on the difference of the fitted value and true value, mo
 acf(residuals(covid.gam))
 ```
 
-Second conclusion: based on this residual autocorrelation check, the model is autocorrelated. So, `ARIMA` model could be another possible solution.
+Second conclusion: based on this residual autocorrelation check, the model seems autocorrelated. So, `ARIMA` model could be another possible solution.  Let's have a try: 
 
 ```{r,include=F}
 x <- seq(0, 100)
 plot(x, predict(covid.gam, newdata = data.frame(day=x)),ylab="Expected Output", xlab="day", type="l") 
-points(log(count)~day)
+# points(log(count)~day)
 ```
 
 ```{r,include=F}
@@ -199,7 +208,7 @@ covid.arima <- auto.arima(count)
 covid.arima
 ```
 
-### 3.2 Precitons
+### 3.2 Prediction:
 
 Predict the next 8 days number of cases.
 
@@ -228,7 +237,7 @@ Then, compare the predicted values with the actual count by subtracting the actu
 
 ### 3.3 Conclusions
 
-Based on this calculation, most of differences between the fitted value and the actual daily case count is smaller than 2 standard errors. So, we accepted the null hypothesis the predicted and the acutal value are the same, and the model is a **proper** model.
+Based on this calculation, most of differences between the fitted value and the actual daily case count is smaller than 2 standard errors. So, we accepted the null hypothesis the predicted and the acutal value are the same, and the model is a **PROPER** model.
 
 
 ## 4. Comments on models
@@ -243,17 +252,20 @@ print(paste("GLM AIC: ",AIC(covid.glm)))
 print(paste("GAM AIC: ",AIC(covid.gam)))
 ```
 
-In terms of AIC, clearly `ARIMA` model wins.
+---
 
-### 4.2 Thoughts
+# FINALL CONCLUSION: 
+
+In terms of AIC, clearly `ARIMA` model wins. The fitted ARIMA(0,1,2) model is : 
+
+Ŷ<sub>t</sub>   =  20.7957 + Y<sub>t-1</sub>  - 1.3574e<sub>t-1</sub> + 0.7537e<sub>t-2</sub> , 
+
+
+So given number of increase/cases, previous two error terms we can generally predict the following number within 2*sigma. 
+
 
 In this project, since the data is a time series model, so the `ARIMA` model shows its advantages. For `GLM` and `GAM` model, it could be possible to fit the data at large, but the prediction of the next 5 or 10 days could be dangerous, since these models are not suitable for extrapolation beyond the data range.
 
 From the first part of this report, it showed that the data is not updated daily or the daily increase stays at 0 at the first phase of the transmission. So this could bring some extra noise to the data.
 
 One thing can be improved for these models is that: since we use aggregated values from all the province, the variance of the data could be reduced if we construct different models for different provinces and then aggregate the predicted value.
-
-
-
-
-
